@@ -4,28 +4,34 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-ctx.fillStyle = 'pink';
+// ctx.fillStyle = 'pink';
 ctx.strokeStyle = 'white';
 // ctx.lineWidth = 2;
 console.log(ctx);
+
+const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+gradient.addColorStop(0, 'white');
+gradient.addColorStop(0.5, 'magenta');
+gradient.addColorStop(1, 'blue');
+ctx.fillStyle = gradient;
 
 // Contains logic to build individual particle objects
 class Particle {
     constructor(effect) {
         this.effect = effect;   // Singleton implementation
         //this.radius = 15;   // Pixels (default)
-        this.radius = Math.random() * 40 + 5; 
+        this.radius = Math.random() * 10 + 5; 
         this.x = this.radius + Math.random() * (this.effect.width - this.radius * 2);
         this.y = this.radius + Math.random() * (this.effect.height - this.radius * 2);  
         
         //this.vx = 1;    // Speed      
-        this.vx = Math.random() * 4 - 2; 
-        this.vy = Math.random() * 4 - 2; 
+        this.vx = Math.random() * 1 - 0.5; 
+        this.vy = Math.random() * 1 - 0.5; 
     }
 
     draw(context) {
         // context.fillStyle = 'hsl(300, 100%, 50%)';
-        context.fillStyle = 'hsl('+ this.x * 0.5 +', 100%, 50%)';
+        // context.fillStyle = 'hsl('+ this.x * 0.5 +', 100%, 50%)';
         // context.fillStyle = 'hsl('+ Math.random() * 360 +', 100%, 50%)';
 
         context.beginPath();
