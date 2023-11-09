@@ -10,23 +10,30 @@ ctx.strokeStyle = 'white';
 console.log(ctx);
 
 const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-gradient.addColorStop(0, 'white');
-gradient.addColorStop(0.5, 'magenta');
-gradient.addColorStop(1, 'blue');
+this.setGradientStops(gradient);
 ctx.fillStyle = gradient;
+ctx.strokeStyle = 'white';
+
+function setGradientStops(gradient) {
+    gradient.addColorStop(0, '#12B8FF');
+    gradient.addColorStop(0.25, '#01DC03');
+    gradient.addColorStop(0.5, '#FFE62D');
+    gradient.addColorStop(0.75, '#FD4499');
+    gradient.addColorStop(1, '#DF19FB');
+}
 
 // Contains logic to build individual particle objects
 class Particle {
     constructor(effect) {
         this.effect = effect;   // Singleton implementation
         //this.radius = 15;   // Pixels (default)
-        this.radius = Math.random() * 10 + 5; 
+        this.radius = Math.random() * 12 + 1;
         this.x = this.radius + Math.random() * (this.effect.width - this.radius * 2);
-        this.y = this.radius + Math.random() * (this.effect.height - this.radius * 2);  
-        
-        //this.vx = 1;    // Speed      
-        this.vx = Math.random() * 1 - 0.5; 
-        this.vy = Math.random() * 1 - 0.5; 
+        this.y = this.radius + Math.random() * (this.effect.height - this.radius * 2);
+
+        //this.vx = 1;    // Speed
+        this.vx = Math.random() * 1 - 0.5;
+        this.vy = Math.random() * 1 - 0.5;
     }
 
     draw(context) {
@@ -37,29 +44,119 @@ class Particle {
         context.beginPath();
         context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         context.fill();
-        context.stroke();
+        // context.stroke();
     }
 
     update() {
-        //this.x++;
-        this.x += this.vx;
-        if(this.x > this.effect.width - this.radius || this.x < 0) this.vx *= -1;
+        if(this.effect.mouse.pressed) {
+            const dx = this.x - this.effect.mouse.x;
+            const dy = this.y - this.effect.mouse.y;
 
+            const distance = Math.hypot(dx, dy);
+
+            // Dynamic spped according to mouse distance
+            const force = this.effect.mouse.radius / distance;
+
+            if(distance < this.effect.mouse.radius) {
+                const angle = Math.atan2(dy, dx);   // atan2: Counter-clockwise angle in radians between horizontal line from (0,0) and line between (x,y) coordinates
+
+                // Moves particles away from each other
+                this.x += Math.cos(angle);
+                this.y += Math.sin(angle);
+
+                // this.x += Math.sin(angle);
+                // this.y += Math.cos(angle);
+
+                // this.x += Math.sin(angle);
+                // this.y += Math.sin(angle);
+
+                // this.x += Math.cos(angle);
+                // this.y += Math.cos(angle);
+            }
+        }
+
+        // Edge cases - Push balls past the edges of the canvas
+        if(this.x < this.radius) {
+            // Left Corner/Edge
+            this.x = this.radius;
+            this.vx *= -1;
+        }
+        else if(this.x > this.effect.width -  this.radius) {
+            // Right Corner/Edge
+            this.x = this.effect.width -  this.radius;
+            this.vx *= -1;
+        }
+        else if(this.y < this.radius) {
+            // Top Corner/Edge
+            this.y = this.radius;
+            this.vy *= -1;
+        }
+        else if(this.y > this.effect.width -  this.radius) {
+            // Bottom Corner/Edge
+            this.y = this.effect.width -  this.radius;
+            this.vy *= -1;
+        }
+
+        //this.x++;
+        // this.x += this.vx;
+        // if(this.x > this.effect.width - this.radius || this.x < 0) this.vx *= -1;
+
+        // this.y += this.vy;
+        // if(this.y > this.effect.height - this.radius || this.y < 0) this.vy *= -1;
+
+        this.x += this.vx;
         this.y += this.vy;
-        if(this.y > this.effect.height - this.radius || this.y < 0) this.vy *= -1;
+    }
+
+    reset() {
+        this.x = this.radius + Math.random() * (this.effect.width - this.radius * 2);
+        this.y = this.radius + Math.random() * (this.effect.height - this.radius * 2);
     }
 }
 
 // Brain of our codebase (manages all particles)
 class Effect {
     // To make sure all shapes are drawn within the cannvas area
-    constructor(canvas) {
+    constructor(canvas, context) {
         this.canvas = canvas;   // Converts it to a class property
+        this.context = context;
         this.width = this.canvas.width;
         this.height = this.canvas.height;
         this.particles = [];
-        this.numberOfParticles = 200;
+        this.numberOfParticles = 300;
         this.createParticles();
+
+        // Make particles react to mouse
+        this.mouse = {
+            x: 0,
+            y: 0,
+            pressed: false,
+            radius: 150     // Mouse influence radius
+        }
+
+        window.addEventListener('resize', e => {
+            // console.log(e.target.window.innerWidth);
+            this.resize(e.target.window.innerWidth, e.target.window.innerHeight, context);
+        });
+
+        window.addEventListener('mousemove', e => {
+            // console.log(e.x, e.y);
+            if(this.mouse.pressed) {
+                this.mouse.x = e.x;
+                this.mouse.y = e.y;
+                console.log(this.mouse.x, this.mouse.y);
+            }
+        });
+
+        window.addEventListener('mousedown', e => {
+            this.mouse.pressed = true;
+            this.mouse.x = e.x;
+                this.mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseup', e => {
+            this.mouse.pressed = false;
+        });
     }
 
     createParticles() {
@@ -69,14 +166,62 @@ class Effect {
     }
 
     handleParticles(context) {
+        this.connectParticles(context);    // Draws a line joining all particles within 100 pixels from each other
+
         this.particles.forEach(particle => {
             particle.draw(context);
             particle.update();
         });
     }
+
+    connectParticles(context) {
+        // Creates a Particle System
+        const maxDistance = 100;
+
+        for (let a = 0; a < this.particles.length; a++){
+            for(let b = a; b < this.particles.length; b++) {
+                const dx = this.particles[a].x - this.particles[b].x;
+                const dy = this.particles[a].y - this.particles[b].y;
+
+                const distance = Math.hypot(dx, dy);
+                if(distance < maxDistance) {
+                    context.save();     // Save current state of canvas
+
+                    const opacity = 1 - (distance/maxDistance); // Disappear as the particles move away - Makes transition smooth and not glitchy
+                    context.globalAlpha = opacity;
+
+                    context.beginPath();
+                    context.moveTo(this.particles[a].x, this.particles[a].y);   // Defines starting point/coordinate of the line [joining the two points]
+                    context.lineTo(this.particles[b].x, this.particles[b].y);   // Defines end point/coordinate of the line [joining the two points]
+                    context.stroke();
+
+                    context.restore();  // Reset canvas
+                }
+            }
+        }
+    }
+
+    resize(width, height) {
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        this.width = width;
+        this.height = height;
+
+        // WHY? - Because it resets every time window gets resized, to default value (black)**
+        const gradient = this.context.createLinearGradient(0,0,width, height);
+        this.setGradientStops(gradient);
+        this.context.fillStyle = gradient;
+        this.context.strokeStyle = 'white';
+
+        // Redistribute particles all around
+        this.particles.forEach(particle => {
+            particle.reset();
+        })
+    }
 }
 
-const effect = new Effect(canvas);
+const effect = new Effect(canvas, ctx);
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);      // Removes the alt paint (previous animation) to clear up the canvas of trails
