@@ -10,17 +10,15 @@ ctx.strokeStyle = 'white';
 console.log(ctx);
 
 const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-this.setGradientStops(gradient);
+
+gradient.addColorStop(0, '#12B8FF');
+gradient.addColorStop(0.25, '#01DC03');
+gradient.addColorStop(0.5, '#FFE62D');
+gradient.addColorStop(0.75, '#FD4499');
+gradient.addColorStop(1, '#DF19FB');
+
 ctx.fillStyle = gradient;
 ctx.strokeStyle = 'white';
-
-function setGradientStops(gradient) {
-    gradient.addColorStop(0, '#12B8FF');
-    gradient.addColorStop(0.25, '#01DC03');
-    gradient.addColorStop(0.5, '#FFE62D');
-    gradient.addColorStop(0.75, '#FD4499');
-    gradient.addColorStop(1, '#DF19FB');
-}
 
 // Contains logic to build individual particle objects
 class Particle {
@@ -210,7 +208,13 @@ class Effect {
 
         // WHY? - Because it resets every time window gets resized, to default value (black)**
         const gradient = this.context.createLinearGradient(0,0,width, height);
-        this.setGradientStops(gradient);
+        
+        gradient.addColorStop(0, '#12B8FF');
+        gradient.addColorStop(0.25, '#01DC03');
+        gradient.addColorStop(0.5, '#FFE62D');
+        gradient.addColorStop(0.75, '#FD4499');
+        gradient.addColorStop(1, '#DF19FB');
+
         this.context.fillStyle = gradient;
         this.context.strokeStyle = 'white';
 
