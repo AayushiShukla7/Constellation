@@ -25,13 +25,20 @@ class Particle {
     constructor(effect) {
         this.effect = effect;   // Singleton implementation
         //this.radius = 15;   // Pixels (default)
-        this.radius = Math.random() * 12 + 1;
+        this.radius = Math.floor(Math.random() * 10 + 1);   // Why Math.floor()? - Because it's easier for JS to work with integers.
         this.x = this.radius + Math.random() * (this.effect.width - this.radius * 2);
         this.y = this.radius + Math.random() * (this.effect.height - this.radius * 2);
 
         //this.vx = 1;    // Speed
         this.vx = Math.random() * 1 - 0.5;
         this.vy = Math.random() * 1 - 0.5;
+
+        // for physics in particle motion
+        this.pushX = 0;
+        this.pushY = 0;
+
+        // Simulating physics
+        this.friction = 0.95;
     }
 
     draw(context) {
@@ -59,19 +66,17 @@ class Particle {
                 const angle = Math.atan2(dy, dx);   // atan2: Counter-clockwise angle in radians between horizontal line from (0,0) and line between (x,y) coordinates
 
                 // Moves particles away from each other
-                this.x += Math.cos(angle);
-                this.y += Math.sin(angle);
+                // this.x += Math.cos(angle) * force;
+                // this.y += Math.sin(angle) * force;
 
-                // this.x += Math.sin(angle);
-                // this.y += Math.cos(angle);
-
-                // this.x += Math.sin(angle);
-                // this.y += Math.sin(angle);
-
-                // this.x += Math.cos(angle);
-                // this.y += Math.cos(angle);
+                // Physics in particle motion
+                this.pushX += Math.cos(angle) * force;
+                this.pushY += Math.sin(angle) * force;
             }
         }
+
+        this.x += (this.pushX *= this.friction) + this.vx;
+        this.y += (this.pushY *= this.friction) + this.vy;
 
         // Edge cases - Push balls past the edges of the canvas
         if(this.x < this.radius) {
@@ -94,16 +99,6 @@ class Particle {
             this.y = this.effect.width -  this.radius;
             this.vy *= -1;
         }
-
-        //this.x++;
-        // this.x += this.vx;
-        // if(this.x > this.effect.width - this.radius || this.x < 0) this.vx *= -1;
-
-        // this.y += this.vy;
-        // if(this.y > this.effect.height - this.radius || this.y < 0) this.vy *= -1;
-
-        this.x += this.vx;
-        this.y += this.vy;
     }
 
     reset() {
@@ -129,7 +124,7 @@ class Effect {
             x: 0,
             y: 0,
             pressed: false,
-            radius: 150     // Mouse influence radius
+            radius: 200     // Mouse influence radius
         }
 
         window.addEventListener('resize', e => {
